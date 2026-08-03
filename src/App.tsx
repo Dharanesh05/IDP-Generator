@@ -85,7 +85,43 @@ function createClientFallbackIDP(studentProfile: StudentProfile): ComprehensiveI
     ],
     certifications: [
       {
-        id: "cert_1",
+        id: "cert_free_1",
+        title: "Responsive Web Design & Modern Frontend Certification",
+        providerOrPlatform: "freeCodeCamp",
+        description: "Comprehensive 300-hour hands-on certification covering HTML5, CSS3, Flexbox, CSS Grid, and responsive UI principles.",
+        link: "https://www.freecodecamp.org/learn/2022/responsive-web-design/",
+        difficultyOrTime: "4 weeks (Self-Paced)",
+        skillsAcquired: ["Responsive Web Design", "HTML5 & CSS3", "Flexbox & Grid", "UI Design"],
+        actionLabel: "Start Free Certification",
+        isPaid: false,
+        priceInfo: "Free"
+      },
+      {
+        id: "cert_free_2",
+        title: `Foundational ${major} & Software Engineering Principles`,
+        providerOrPlatform: "Meta / Coursera (Free Audit)",
+        description: `Explore core computational concepts, clean code standards, and modern development workflows tailored for ${goals} roles.`,
+        link: "https://www.coursera.org",
+        difficultyOrTime: "3-4 weeks",
+        skillsAcquired: ["Software Principles", "Version Control", "Algorithmic Thinking"],
+        actionLabel: "Audit For Free",
+        isPaid: false,
+        priceInfo: "Free"
+      },
+      {
+        id: "cert_free_3",
+        title: "AWS Cloud Quest & Cloud Practitioner Foundations",
+        providerOrPlatform: "AWS Skill Builder",
+        description: "Interactive role-based learning game and practical cloud fundamentals certification offered directly by Amazon Web Services.",
+        link: "https://aws.amazon.com/training/digital/",
+        difficultyOrTime: "2-3 weeks",
+        skillsAcquired: ["Cloud Computing", "AWS Core Services", "Infrastructure Fundamentals"],
+        actionLabel: "Start AWS Free Track",
+        isPaid: false,
+        priceInfo: "Free"
+      },
+      {
+        id: "cert_paid_1",
         title: `Professional Certificate in Advanced ${major} Concepts`,
         providerOrPlatform: "Coursera (Google / IBM)",
         description: `A highly recognized professional certificate to solidify core engineering principles for ${goals} roles.`,
@@ -97,16 +133,16 @@ function createClientFallbackIDP(studentProfile: StudentProfile): ComprehensiveI
         priceInfo: "Paid Certificate"
       },
       {
-        id: "cert_2",
-        title: "Frontend & Full Stack Web Development",
-        providerOrPlatform: "freeCodeCamp / Meta",
-        description: "Comprehensive hands-on training focusing on modern web standards, UI design, and production deployment.",
-        link: "https://www.freecodecamp.org",
-        difficultyOrTime: "4 weeks",
-        skillsAcquired: ["Responsive Web Design", "HTML5 & CSS3", "React & Modern JS"],
-        actionLabel: "Start Free Certification",
-        isPaid: false,
-        priceInfo: "Free"
+        id: "cert_paid_2",
+        title: "AWS Certified Developer / Cloud Architect Associate",
+        providerOrPlatform: "Amazon Web Services (AWS)",
+        description: "Industry-standard certification validating technical expertise in building and deploying cloud applications on AWS.",
+        link: "https://aws.amazon.com/certification/",
+        difficultyOrTime: "2-3 months",
+        skillsAcquired: ["AWS Services", "Serverless Architecture", "Cloud Security"],
+        actionLabel: "View Exam Guide",
+        isPaid: true,
+        priceInfo: "Paid Exam ($150)"
       }
     ],
     projects: [

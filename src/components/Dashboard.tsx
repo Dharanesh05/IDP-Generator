@@ -150,26 +150,40 @@ export default function Dashboard({ idp, onReset, onAskAiQuestion }: DashboardPr
   };
 
   const freeCertifications = useMemo(() => {
-    return (idp.certifications || []).filter(item => {
+    const list = (idp.certifications || []).filter(item => {
       if (item.isPaid !== undefined) {
         return !item.isPaid;
       }
       const text = `${item.title} ${item.description} ${item.providerOrPlatform} ${item.actionLabel || ""}`.toLowerCase();
-      if (text.includes("free") || text.includes("freecodecamp")) return true;
-      if (text.includes("paid") || text.includes("subscription") || text.includes("$") || text.includes("coursera") || text.includes("udemy") || text.includes("fee")) return false;
-      return item.id.endsWith("2") || item.id.includes("free");
+      if (text.includes("free") || text.includes("freecodecamp") || item.id.includes("free")) return true;
+      if (text.includes("paid") || text.includes("subscription") || text.includes("$") || text.includes("fee")) return false;
+      return true;
+    });
+
+    const seen = new Set<string>();
+    return list.filter(item => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
     });
   }, [idp.certifications]);
 
   const paidCertifications = useMemo(() => {
-    return (idp.certifications || []).filter(item => {
+    const list = (idp.certifications || []).filter(item => {
       if (item.isPaid !== undefined) {
         return !!item.isPaid;
       }
       const text = `${item.title} ${item.description} ${item.providerOrPlatform} ${item.actionLabel || ""}`.toLowerCase();
-      if (text.includes("free") || text.includes("freecodecamp")) return false;
-      if (text.includes("paid") || text.includes("subscription") || text.includes("$") || text.includes("coursera") || text.includes("udemy") || text.includes("fee")) return true;
-      return !(item.id.endsWith("2") || item.id.includes("free"));
+      if (text.includes("paid") || text.includes("subscription") || text.includes("$") || item.id.includes("paid")) return true;
+      if (text.includes("free") || text.includes("freecodecamp") || item.id.includes("free")) return false;
+      return false;
+    });
+
+    const seen = new Set<string>();
+    return list.filter(item => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
     });
   }, [idp.certifications]);
 
