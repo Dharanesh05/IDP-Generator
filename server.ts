@@ -242,179 +242,177 @@ Your response MUST be fully populated, highly relevant to their target goals, an
     const systemInstruction = `You are an elite AI Career Advisory System. Your task is to output a comprehensive and highly specific Individual Development Plan (IDP) in valid JSON format.
 Ensure that each list of items has exactly 2 to 4 high-quality, practical entries. For certifications, make sure to classify whether it is paid (isPaid: true, priceInfo: e.g. "Paid Certificate") or free (isPaid: false, priceInfo: "Free"). Give exact course names, popular platforms, github projects, and real interview advice customized for this specific student.`;
 
-    // Generate content using the recommended Gemini model
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: prompt,
-      config: {
-        systemInstruction: systemInstruction,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            summary: {
-              type: Type.STRING,
-              description: "A customized summary of their development plan and strategic steps.",
-            },
-            suggestedRoles: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
-              description: "2-3 highly specific job positions or roles suited for their path.",
-            },
-            certifications: {
-              type: Type.ARRAY,
-              description: "Specific free or widely accessible certification courses with providers.",
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                   id: { type: Type.STRING },
-                   title: { type: Type.STRING },
-                   providerOrPlatform: { type: Type.STRING },
-                   description: { type: Type.STRING },
-                   link: { type: Type.STRING },
-                   difficultyOrTime: { type: Type.STRING },
-                   skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
-                   actionLabel: { type: Type.STRING },
-                   isPaid: { type: Type.BOOLEAN, description: "Whether this certification requires payment/is a paid certification." },
-                   priceInfo: { type: Type.STRING, description: "Detailed cost information (e.g. 'Free', 'Free Audit', 'Paid ($49)', 'Subscription')" }
-                },
-                required: ["id", "title", "providerOrPlatform", "description"]
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash",
+        contents: prompt,
+        config: {
+          systemInstruction: systemInstruction,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              summary: {
+                type: Type.STRING,
+                description: "A customized summary of their development plan and strategic steps.",
+              },
+              suggestedRoles: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+                description: "Target job titles.",
+              },
+              certifications: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    id: { type: Type.STRING },
+                    title: { type: Type.STRING },
+                    providerOrPlatform: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    link: { type: Type.STRING },
+                    difficultyOrTime: { type: Type.STRING },
+                    skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    actionLabel: { type: Type.STRING },
+                    isPaid: { type: Type.BOOLEAN },
+                    priceInfo: { type: Type.STRING }
+                  },
+                  required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel", "isPaid", "priceInfo"]
+                }
+              },
+              projects: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    id: { type: Type.STRING },
+                    title: { type: Type.STRING },
+                    providerOrPlatform: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    link: { type: Type.STRING },
+                    difficultyOrTime: { type: Type.STRING },
+                    skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    actionLabel: { type: Type.STRING }
+                  },
+                  required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
+                }
+              },
+              codingPractice: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    id: { type: Type.STRING },
+                    title: { type: Type.STRING },
+                    providerOrPlatform: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    link: { type: Type.STRING },
+                    difficultyOrTime: { type: Type.STRING },
+                    skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    actionLabel: { type: Type.STRING }
+                  },
+                  required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
+                }
+              },
+              aptitudePractice: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    id: { type: Type.STRING },
+                    title: { type: Type.STRING },
+                    providerOrPlatform: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    link: { type: Type.STRING },
+                    difficultyOrTime: { type: Type.STRING },
+                    skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    actionLabel: { type: Type.STRING }
+                  },
+                  required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
+                }
+              },
+              softSkills: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    id: { type: Type.STRING },
+                    title: { type: Type.STRING },
+                    providerOrPlatform: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    link: { type: Type.STRING },
+                    difficultyOrTime: { type: Type.STRING },
+                    skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    actionLabel: { type: Type.STRING }
+                  },
+                  required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
+                }
+              },
+              resumeImprovements: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    id: { type: Type.STRING },
+                    title: { type: Type.STRING },
+                    providerOrPlatform: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    link: { type: Type.STRING },
+                    difficultyOrTime: { type: Type.STRING },
+                    skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    actionLabel: { type: Type.STRING }
+                  },
+                  required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
+                }
+              },
+              interviewPrep: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    id: { type: Type.STRING },
+                    title: { type: Type.STRING },
+                    providerOrPlatform: { type: Type.STRING },
+                    description: { type: Type.STRING },
+                    link: { type: Type.STRING },
+                    difficultyOrTime: { type: Type.STRING },
+                    skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    actionLabel: { type: Type.STRING }
+                  },
+                  required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
+                }
               }
             },
-            projects: {
-              type: Type.ARRAY,
-              description: "Tailored projects the student can build from scratch to build their portfolio.",
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  id: { type: Type.STRING },
-                  title: { type: Type.STRING },
-                  providerOrPlatform: { type: Type.STRING },
-                  description: { type: Type.STRING },
-                  link: { type: Type.STRING },
-                  difficultyOrTime: { type: Type.STRING },
-                  skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  actionLabel: { type: Type.STRING }
-                },
-                required: ["id", "title", "providerOrPlatform", "description"]
-              }
-            },
-            codingPractice: {
-              type: Type.ARRAY,
-              description: "Coding practice modules, challenge tracks, or interactive labs.",
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  id: { type: Type.STRING },
-                  title: { type: Type.STRING },
-                  providerOrPlatform: { type: Type.STRING },
-                  description: { type: Type.STRING },
-                  link: { type: Type.STRING },
-                  difficultyOrTime: { type: Type.STRING },
-                  skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  actionLabel: { type: Type.STRING }
-                },
-                required: ["id", "title", "providerOrPlatform", "description"]
-              }
-            },
-            aptitudePractice: {
-              type: Type.ARRAY,
-              description: "Aptitude, analytical, and logical reasoning exercises/websites.",
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  id: { type: Type.STRING },
-                  title: { type: Type.STRING },
-                  providerOrPlatform: { type: Type.STRING },
-                  description: { type: Type.STRING },
-                  link: { type: Type.STRING },
-                  difficultyOrTime: { type: Type.STRING },
-                  skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  actionLabel: { type: Type.STRING }
-                },
-                required: ["id", "title", "providerOrPlatform", "description"]
-              }
-            },
-            softSkills: {
-              type: Type.ARRAY,
-              description: "Actionable recommendations to improve public speaking, technical writeups, or team coordination.",
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  id: { type: Type.STRING },
-                  title: { type: Type.STRING },
-                  providerOrPlatform: { type: Type.STRING },
-                  description: { type: Type.STRING },
-                  link: { type: Type.STRING },
-                  difficultyOrTime: { type: Type.STRING },
-                  skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  actionLabel: { type: Type.STRING }
-                },
-                required: ["id", "title", "providerOrPlatform", "description"]
-              }
-            },
-            resumeImprovements: {
-              type: Type.ARRAY,
-              description: "Specific formatting tips, wording advice, or key sections to highlight for ATS scoring.",
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  id: { type: Type.STRING },
-                  title: { type: Type.STRING },
-                  providerOrPlatform: { type: Type.STRING },
-                  description: { type: Type.STRING },
-                  link: { type: Type.STRING },
-                  difficultyOrTime: { type: Type.STRING },
-                  skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  actionLabel: { type: Type.STRING }
-                },
-                required: ["id", "title", "providerOrPlatform", "description"]
-              }
-            },
-            interviewPrep: {
-              type: Type.ARRAY,
-              description: "Interview formats to master (such as STAR behavioral stories, whiteboard system design, coding rounds).",
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  id: { type: Type.STRING },
-                  title: { type: Type.STRING },
-                  providerOrPlatform: { type: Type.STRING },
-                  description: { type: Type.STRING },
-                  link: { type: Type.STRING },
-                  difficultyOrTime: { type: Type.STRING },
-                  skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  actionLabel: { type: Type.STRING }
-                },
-                required: ["id", "title", "providerOrPlatform", "description"]
-              }
-            }
+            required: [
+              "summary",
+              "suggestedRoles",
+              "certifications",
+              "projects",
+              "codingPractice",
+              "aptitudePractice",
+              "softSkills",
+              "resumeImprovements",
+              "interviewPrep"
+            ]
           },
-          required: [
-            "summary",
-            "suggestedRoles",
-            "certifications",
-            "projects",
-            "codingPractice",
-            "aptitudePractice",
-            "softSkills",
-            "resumeImprovements",
-            "interviewPrep"
-          ]
         },
-      },
-    });
+      });
 
-    const text = response.text;
-    if (!text) {
-      throw new Error("Empty text returned from Gemini API");
+      const text = response.text;
+      if (!text) {
+        throw new Error("Empty text returned from Gemini API");
+      }
+
+      const resultJson = JSON.parse(text.trim());
+      res.json({
+        ...resultJson,
+        isMock: false
+      });
+    } catch (apiErr: any) {
+      console.warn("Gemini API call failed, using intelligent fallback generator:", apiErr?.message || apiErr);
+      const fallback = generateFallbackIDP(major, skills, goals, experienceLevel || "intermediate", timeCommitment || "10 hours/week");
+      res.json(fallback);
     }
-
-    const resultJson = JSON.parse(text.trim());
-    res.json({
-      ...resultJson,
-      isMock: false
-    });
   } catch (error: any) {
     console.error("Gemini API error:", error);
     res.status(500).json({
@@ -423,6 +421,29 @@ Ensure that each list of items has exactly 2 to 4 high-quality, practical entrie
     });
   }
 });
+
+// Helper function for generating intelligent fallback chat responses
+function getFallbackChatAnswer(message: string, studentProfile: any, idp: any): string {
+  const majorStr = studentProfile?.major || "Computer Science / Tech";
+  const goalsStr = studentProfile?.goals || "Software Career";
+  const msgLower = message.toLowerCase();
+
+  let answer = `Regarding your question about **"${message.trim()}"**:\n\nBased on your profile in **${majorStr}** targeting **${goalsStr}**, `;
+
+  if (msgLower.includes("certif")) {
+    answer += `we recommend exploring the free foundational track (e.g. Meta, AWS, or freeCodeCamp modules) before enrolling in paid credentials. Check out the **Certifications** section in your dashboard for direct links!`;
+  } else if (msgLower.includes("project") || msgLower.includes("github") || msgLower.includes("build")) {
+    answer += `focus on building 2-3 end-to-end portfolio projects showcasing your skills in ${studentProfile?.skills || "your primary tech stack"}. Make sure your GitHub repositories include clean documentation and live deployment links.`;
+  } else if (msgLower.includes("interview") || msgLower.includes("resume") || msgLower.includes("prep")) {
+    answer += `use the STAR method (Situation, Task, Action, Result) for behavioral questions and highlight quantified results (e.g., "improved response time by 40%") on your resume.`;
+  } else if (msgLower.includes("hi") || msgLower.includes("hello") || msgLower.includes("hey")) {
+    answer += `hello! How can I help you advance toward your **${goalsStr}** career goals today? Feel free to ask about certifications, projects, coding practice, or interview prep!`;
+  } else {
+    answer += `make sure to maintain your weekly commitment of **${studentProfile?.timeCommitment || "10 hours/week"}** and track your daily learning consistency with the Login Streak tracker!`;
+  }
+
+  return answer;
+}
 
 // API Route for Floating IDP AI Assistant Chat
 app.post("/api/chat-idp", async (req, res) => {
@@ -442,18 +463,7 @@ app.post("/api/chat-idp", async (req, res) => {
     const summaryStr = idp?.summary || "Personalized Individual Development Plan";
 
     if (!ai) {
-      // Intelligently formatted fallback reply
-      let fallbackAnswer = `Regarding your question on "${message}":\n\nBased on your IDP profile for **${majorStr}** targeting **${goalsStr}**, we recommend prioritizing your highest impact items first. `;
-      if (message.toLowerCase().includes("certif")) {
-        fallbackAnswer += `Check the **Free Certifications** track first to build foundational credentials at zero cost before committing to paid industry standard certificates.`;
-      } else if (message.toLowerCase().includes("project")) {
-        fallbackAnswer += `Focus on building end-to-end GitHub portfolio pieces that demonstrate practical application of your core skills: ${studentProfile?.skills || "Programming"}.`;
-      } else if (message.toLowerCase().includes("interview") || message.toLowerCase().includes("resume")) {
-        fallbackAnswer += `Use the STAR method (Situation, Task, Action, Result) for behavioral questions and ensure your resume contains quantified impact numbers.`;
-      } else {
-        fallbackAnswer += `Follow your weekly ${studentProfile?.timeCommitment || "study commitment"} schedule and log your daily progress using the Login Streak engine to maximize momentum!`;
-      }
-
+      const fallbackAnswer = getFallbackChatAnswer(message, studentProfile, idp);
       res.json({ reply: fallbackAnswer });
       return;
     }
@@ -496,20 +506,24 @@ GUIDELINES:
       { role: "user", parts: [{ text: `${systemInstruction}\n\nUSER QUESTION: ${message}` }] }
     ];
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
-      contents: contents,
-    });
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash",
+        contents: contents,
+      });
 
-    const replyText = response.text || "I apologize, but I couldn't process your question at this moment. Please try asking in a different way.";
-    res.json({ reply: replyText });
+      const replyText = response.text || getFallbackChatAnswer(message, studentProfile, idp);
+      res.json({ reply: replyText });
+    } catch (apiErr: any) {
+      console.warn("Gemini Chat API call failed, using fallback answer:", apiErr?.message || apiErr);
+      const fallbackAnswer = getFallbackChatAnswer(message, studentProfile, idp);
+      res.json({ reply: fallbackAnswer });
+    }
 
   } catch (error: any) {
     console.error("Gemini Chat API error:", error);
-    res.status(500).json({
-      error: "Failed to answer question via Gemini AI",
-      details: error.message || error
-    });
+    const fallbackAnswer = getFallbackChatAnswer(req.body?.message || "", req.body?.studentProfile, req.body?.idp);
+    res.json({ reply: fallbackAnswer });
   }
 });
 
@@ -616,4 +630,8 @@ async function startServer() {
   });
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;
