@@ -210,30 +210,40 @@ function generateFallbackIDP(major: string, skills: string, goals: string, level
 
 // API Route for IDP Recommendation
 app.post("/api/generate-idp", async (req, res) => {
-  try {
-    const { major, skills, goals, experienceLevel, timeCommitment } = req.body;
+  let reqMajor = "Computer Science";
+  let reqSkills = "Software Engineering";
+  let reqGoals = "Software Developer";
+  let reqLevel = "intermediate";
+  let reqCommitment = "10 hours/week";
 
-    if (!major || !skills || !goals) {
-      res.status(400).json({ error: "Missing required fields: major, skills, and goals are required." });
-      return;
+  try {
+    let body = req.body;
+    if (typeof body === "string") {
+      try { body = JSON.parse(body); } catch (e) {}
     }
+    body = body || {};
+
+    reqMajor = body.major || reqMajor;
+    reqSkills = body.skills || reqSkills;
+    reqGoals = body.goals || reqGoals;
+    reqLevel = body.experienceLevel || reqLevel;
+    reqCommitment = body.timeCommitment || reqCommitment;
 
     const ai = getGeminiClient();
 
     if (!ai) {
-      // Fallback response with helpful indicator
-      const fallback = generateFallbackIDP(major, skills, goals, experienceLevel || "intermediate", timeCommitment || "10 hours/week");
+      const fallback = generateFallbackIDP(reqMajor, reqSkills, reqGoals, reqLevel, reqCommitment);
       res.json(fallback);
       return;
     }
 
     // Prepare prompt
     const prompt = `You are a professional career coach and education consultant. Generate a highly personalized Individual Development Plan (IDP) for a student with the following profile:
-- Major/Specialization: ${major}
-- Current Skills: ${skills}
-- Career Goals/Target Roles: ${goals}
-- Experience Level: ${experienceLevel || 'intermediate'}
-- Weekly Time Commitment: ${timeCommitment || '10 hours/week'}
+- Major/Specialization: ${reqMajor}
+- Current Skills: ${reqSkills}
+- Career Goals/Target Roles: ${reqGoals}
+- Experience Level: ${reqLevel}
+- Weekly Time Commitment: ${reqCommitment}
 
 For the certifications field, provide a mix of highly relevant free certification courses (e.g. from freeCodeCamp, edX free audit, Coursera free audit, Kaggle) and premier paid/professional certifications (e.g. AWS Certified, Coursera/Meta professional certificates, Oracle, Cisco). Ensure you label each certification's cost status accurately.
 Provide extremely realistic, concrete, actionable, and state-of-the-art recommendations. Do not use generic placeholders.
@@ -410,15 +420,13 @@ Ensure that each list of items has exactly 2 to 4 high-quality, practical entrie
       });
     } catch (apiErr: any) {
       console.warn("Gemini API call failed, using intelligent fallback generator:", apiErr?.message || apiErr);
-      const fallback = generateFallbackIDP(major, skills, goals, experienceLevel || "intermediate", timeCommitment || "10 hours/week");
+      const fallback = generateFallbackIDP(reqMajor, reqSkills, reqGoals, reqLevel, reqCommitment);
       res.json(fallback);
     }
   } catch (error: any) {
-    console.error("Gemini API error:", error);
-    res.status(500).json({
-      error: "Failed to generate plan via Gemini AI",
-      details: error.message || error
-    });
+    console.warn("Gemini outer error, using intelligent fallback generator:", error?.message || error);
+    const fallback = generateFallbackIDP(reqMajor, reqSkills, reqGoals, reqLevel, reqCommitment);
+    res.json(fallback);
   }
 });
 
