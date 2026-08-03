@@ -54,89 +54,118 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
     setSuccessMsg(null);
   };
 
-  const handleDemoLogin = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "alex@example.com", password: "password123" }),
-      });
-      const data: AuthResponse = await res.json().catch(() => ({ success: false }));
-      
-      const demoUser: User = data.user || {
-        id: "usr_demo_1",
-        name: "Alex Vance",
-        email: "alex@example.com",
-        institution: "Stanford University",
-        createdAt: new Date().toISOString()
-      };
-
-      localStorage.setItem("idp_user_session", JSON.stringify(demoUser));
-      setSuccessMsg("Welcome! Authenticated via Demo Account.");
-      setTimeout(() => {
-        onLoginSuccess(demoUser);
-      }, 500);
-    } catch (err: any) {
-      // Fail-safe demo session
-      const fallbackUser: User = {
-        id: "usr_demo_1",
-        name: "Alex Vance",
-        email: "alex@example.com",
-        institution: "Stanford University",
-        createdAt: new Date().toISOString()
-      };
-      localStorage.setItem("idp_user_session", JSON.stringify(fallbackUser));
-      onLoginSuccess(fallbackUser);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccessMsg(null);
     setIsLoading(true);
 
-    const endpoint = mode === "login" ? "/api/login" : "/api/signup";
-    const payload =
-      mode === "login"
-        ? { email, password }
-        : { name, email, password, institution };
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = name.trim();
+    const cleanInstitution = institution.trim() || "University Student";
+
+    if (!cleanEmail || !password || (mode === "signup" && !cleanName)) {
+      setError("Please fill in all required fields.");
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const endpoint = mode === "login" ? "/api/login" : "/api/signup";
+      const payload =
+        mode === "login"
+          ? { email: cleanEmail, password }
+          : { name: cleanName, email: cleanEmail, password, institution: cleanInstitution };
 
-      const data: AuthResponse = await res.json().catch(() => ({ success: false }));
+      let userToLogin: User | null = null;
+      let responseSuccess = false;
+      let responseMsg = "";
 
-      if (!res.ok || !data.success || !data.user) {
-        let errMsg = data.message || `Failed to ${mode === "login" ? "log in" : "sign up"}.`;
-        if (mode === "login" && (res.status === 401 || !data.user)) {
-          errMsg = "Invalid email or password. Tip: If you haven't created an account yet, click the 'Sign Up' tab above or use Instant Demo Access!";
+      try {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data: AuthResponse = await res.json().catch(() => ({ success: false }));
+        if (res.ok && data.success && data.user) {
+          userToLogin = data.user;
+          responseSuccess = true;
+          responseMsg = data.message || (mode === "login" ? "Login successful!" : "Account created successfully!");
+        } else if (data.message) {
+          responseMsg = data.message;
         }
-        throw new Error(errMsg);
+      } catch (netErr) {
+        console.warn("Backend API fetch error, using local auth storage fallback:", netErr);
       }
 
-      localStorage.setItem("idp_user_session", JSON.stringify(data.user));
-      setSuccessMsg(data.message || `${mode === "login" ? "Login successful!" : "Account created successfully!"}`);
+      // Local storage persistence fallback for accounts across sessions & serverless restarts
+      const storedAccountsRaw = localStorage.getItem("idp_registered_accounts");
+      let storedAccounts: any[] = [];
+      try {
+        storedAccounts = storedAccountsRaw ? JSON.parse(storedAccountsRaw) : [];
+      } catch (e) {
+        storedAccounts = [];
+      }
 
-      setTimeout(() => {
-        onLoginSuccess(data.user!);
-        resetForm();
-      }, 500);
+      if (mode === "signup") {
+        const existingLocal = storedAccounts.find((a) => a.email === cleanEmail);
+        if (existingLocal && !responseSuccess) {
+          throw new Error("An account with this email already exists. Please sign in instead.");
+        }
+
+        const newUser: User = userToLogin || {
+          id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+          name: cleanName,
+          email: cleanEmail,
+          institution: cleanInstitution,
+          createdAt: new Date().toISOString(),
+        };
+
+        if (!existingLocal) {
+          storedAccounts.push({
+            ...newUser,
+            password: password,
+          });
+          localStorage.setItem("idp_registered_accounts", JSON.stringify(storedAccounts));
+        }
+
+        userToLogin = newUser;
+        setSuccessMsg(responseMsg || "Account created successfully! Redirecting...");
+      } else {
+        // Mode: Login
+        if (!userToLogin) {
+          const matchLocal = storedAccounts.find((a) => a.email === cleanEmail && a.password === password);
+          if (matchLocal) {
+            userToLogin = {
+              id: matchLocal.id,
+              name: matchLocal.name,
+              email: matchLocal.email,
+              institution: matchLocal.institution,
+              createdAt: matchLocal.createdAt,
+            };
+          } else {
+            throw new Error(responseMsg || "Invalid email or password. If you don't have an account yet, click 'Sign Up' to create one.");
+          }
+        }
+
+        setSuccessMsg(responseMsg || "Login successful! Redirecting...");
+      }
+
+      if (userToLogin) {
+        localStorage.setItem("idp_user_session", JSON.stringify(userToLogin));
+        setTimeout(() => {
+          onLoginSuccess(userToLogin!);
+          resetForm();
+        }, 500);
+      }
     } catch (err: any) {
-      setError(err.message || "An unexpected error occurred while processing authentication.");
+      setError(err.message || "An unexpected error occurred during authentication.");
     } finally {
       setIsLoading(false);
     }
   };
-
 
   const getPasswordStrength = () => {
     if (!password) return { label: "", color: "bg-gray-700", percent: 0 };
@@ -171,14 +200,6 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={handleDemoLogin}
-              disabled={isLoading}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-mono text-amber-300 hover:text-white bg-amber-500/15 border border-amber-500/40 hover:border-amber-400 transition-all cursor-pointer shadow-[0_0_15px_rgba(245,158,11,0.2)]"
-            >
-              <Zap size={14} className="text-amber-400 animate-bounce" />
-              <span>Instant Demo Account</span>
-            </button>
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shadow-[0_0_12px_rgba(245,158,11,0.9)]" title="Authentication Portal Online" />
           </div>
         </div>
@@ -424,23 +445,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 </button>
               </form>
 
-              {/* Quick Demo Access */}
-              <div className="mt-6 pt-5 border-t border-amber-500/20 text-center">
-                <p className="text-[11px] text-amber-200/60 font-mono mb-2.5">
-                  Want to explore immediately?
-                </p>
-                <button
-                  type="button"
-                  onClick={handleDemoLogin}
-                  disabled={isLoading}
-                  className="w-full bg-[#0f0d18]/80 border border-amber-500/30 hover:border-amber-400 text-amber-200 hover:text-white font-mono text-xs py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 hover:bg-amber-950/40"
-                >
-                  <Zap size={14} className="text-amber-400" />
-                  <span>Instant Demo Access (Alex Vance)</span>
-                </button>
-              </div>
-
-              <div className="mt-4 flex items-center justify-center gap-1.5 text-[10px] font-mono text-amber-400/60">
+              <div className="mt-6 pt-4 flex items-center justify-center gap-1.5 text-[10px] font-mono text-amber-400/60 border-t border-amber-500/20">
                 <ShieldCheck size={12} className="text-amber-400" />
                 <span>Protected by Intelligent IDP Auth Security</span>
               </div>

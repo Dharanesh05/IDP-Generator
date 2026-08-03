@@ -545,71 +545,84 @@ interface StoredUser {
   createdAt: string;
 }
 
-const usersDb: StoredUser[] = [
-  {
-    id: "usr_demo_1",
-    name: "Alex Vance",
-    email: "alex@example.com",
-    passwordHash: "password123",
-    institution: "Stanford University",
-    createdAt: new Date().toISOString()
-  }
-];
+const usersDb: StoredUser[] = [];
 
 // API Auth Endpoints
 app.post("/api/signup", (req, res) => {
-  const { name, email, password, institution } = req.body;
-  if (!name || !email || !password) {
-    res.status(400).json({ success: false, message: "Name, email, and password are required." });
-    return;
+  try {
+    let body = req.body;
+    if (typeof body === "string") {
+      try { body = JSON.parse(body); } catch (e) {}
+    }
+    body = body || {};
+
+    const { name, email, password, institution } = body;
+    if (!name || !email || !password) {
+      res.status(400).json({ success: false, message: "Name, email, and password are required." });
+      return;
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const existing = usersDb.find(u => u.email.toLowerCase() === cleanEmail);
+    if (existing) {
+      res.status(400).json({ success: false, message: "An account with this email already exists." });
+      return;
+    }
+
+    const newUser: StoredUser = {
+      id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      name: name.trim(),
+      email: cleanEmail,
+      passwordHash: password,
+      institution: institution?.trim() || "University Student",
+      createdAt: new Date().toISOString()
+    };
+
+    usersDb.push(newUser);
+
+    const { passwordHash, ...userWithoutPassword } = newUser;
+    res.json({
+      success: true,
+      user: userWithoutPassword,
+      token: `token_${newUser.id}_${Date.now()}`,
+      message: "Account created successfully!"
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: "Failed to process registration request." });
   }
-
-  const existing = usersDb.find(u => u.email.toLowerCase() === email.toLowerCase());
-  if (existing) {
-    res.status(400).json({ success: false, message: "An account with this email already exists." });
-    return;
-  }
-
-  const newUser: StoredUser = {
-    id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-    name: name.trim(),
-    email: email.trim().toLowerCase(),
-    passwordHash: password,
-    institution: institution?.trim() || "State University",
-    createdAt: new Date().toISOString()
-  };
-
-  usersDb.push(newUser);
-
-  const { passwordHash, ...userWithoutPassword } = newUser;
-  res.json({
-    success: true,
-    user: userWithoutPassword,
-    token: `token_${newUser.id}_${Date.now()}`,
-    message: "Account created successfully!"
-  });
 });
 
 app.post("/api/login", (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    res.status(400).json({ success: false, message: "Email and password are required." });
-    return;
-  }
+  try {
+    let body = req.body;
+    if (typeof body === "string") {
+      try { body = JSON.parse(body); } catch (e) {}
+    }
+    body = body || {};
 
-  const user = usersDb.find(u => u.email.toLowerCase() === email.toLowerCase());
-  if (!user || user.passwordHash !== password) {
-    res.status(401).json({ success: false, message: "Invalid email or password." });
-    return;
-  }
+    const { email, password } = body;
+    if (!email || !password) {
+      res.status(400).json({ success: false, message: "Email and password are required." });
+      return;
+    }
 
-  const { passwordHash, ...userWithoutPassword } = user;
-  res.json({
-    success: true,
-    user: userWithoutPassword,
-    token: `token_${user.id}_${Date.now()}`,
-    message: "Logged in successfully!"
-  });
+    const cleanEmail = email.trim().toLowerCase();
+    const user = usersDb.find(u => u.email.toLowerCase() === cleanEmail);
+    if (!user || user.passwordHash !== password) {
+      res.status(401).json({ success: false, message: "Invalid email or password." });
+      return;
+    }
+
+    const { passwordHash, ...userWithoutPassword } = user;
+    res.json({
+      success: true,
+      user: userWithoutPassword,
+      token: `token_${user.id}_${Date.now()}`,
+      message: "Logged in successfully!"
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: "Failed to process login request." });
+  }
 });
 
 app.post("/api/logout", (_req, res) => {
