@@ -1,0 +1,6 @@
+{
+  "name": "Intelligent IDP Recommendation System",
+  "description": "An Intelligent Recommendation System for Personalized Individual Development Plans (IDPs), offering AI-curated certifications, projects, coding exercises, aptitude resources, soft skills, resume, and interview prep guides.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

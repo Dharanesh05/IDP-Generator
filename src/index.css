@@ -1,0 +1,255 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-neon-blue: #fbbf24; /* Electric Sunburst Gold / Yellow */
+  --color-neon-purple: #ec4899; /* Vibrant Neon Rose Magenta */
+  --color-cyber-dark: #0f0d18; /* Deep Amethyst Charcoal (No green, no blue!) */
+  --color-cyber-card: rgba(24, 20, 36, 0.9);
+}
+
+/* Dynamic Multi-Color Rainbow Animations */
+@keyframes rainbow-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes pulse-gold-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(236, 72, 153, 0.45);
+  }
+}
+
+.animate-rainbow {
+  background-image: linear-gradient(135deg, #f59e0b, #f43f5e, #d946ef, #8b5cf6, #f59e0b);
+  background-size: 300% 300%;
+  animation: rainbow-gradient 6s ease infinite;
+}
+
+.text-rainbow {
+  background-image: linear-gradient(135deg, #fbbf24, #f43f5e, #e11d48, #c084fc, #fbbf24);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: rainbow-gradient 5s ease infinite;
+}
+
+.border-rainbow {
+  border-image: linear-gradient(135deg, #f59e0b, #f43f5e, #d946ef, #8b5cf6) 1;
+}
+
+/* 3D Flowing Circuit Line Animations */
+@keyframes circuit-flow {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes circuit-flow-reverse {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 100;
+  }
+}
+
+@keyframes scan-beam {
+  0% {
+    top: 0%;
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0.2;
+  }
+}
+
+.animate-circuit-flow {
+  animation: circuit-flow 2s linear infinite;
+}
+
+.animate-circuit-flow-reverse {
+  animation: circuit-flow-reverse 2.2s linear infinite;
+}
+
+.animate-scan-beam {
+  animation: scan-beam 3.5s ease-in-out infinite alternate;
+}
+
+.bg-radial-vignette {
+  background: radial-gradient(circle at center, transparent 40%, rgba(15, 13, 24, 0.88) 100%);
+}
+
+/* Base custom styles - Multi-Color Dynamic Charcoal Palette */
+body {
+  background-color: #0f0d18;
+  color: #fcfcfc;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Custom Webkit scrollbars in theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0f0d18;
+}
+::-webkit-scrollbar-thumb {
+  background: #2b223b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #45345d;
+}
+
+/* Disabled custom canvas cursor */
+#custom-cursor-canvas {
+  display: none !important;
+}
+
+/* Clean panel styling - Multi-Color Amethyst Charcoal */
+.glass-panel {
+  background: #181427;
+  border: 1px solid #332749;
+  box-shadow: 0 4px 25px -1px rgba(245, 158, 11, 0.1);
+}
+
+.glass-panel-hover:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.25);
+}
+
+
+
+.cyber-grid, .scanlines, .pulse-glow-bg {
+  background-image: none !important;
+  background: transparent !important;
+  animation: none !important;
+}
+
+/* Professional Print & PDF Export Styles */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #111827 !important;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  /* Hide unnecessary interactive components */
+  #btn-back-to-profile,
+  #btn-restart-tour,
+  #btn-print-pdf,
+  #floating-export-pdf-btn,
+  .floating-export-pdf-btn,
+  #idp-filters-bar,
+  #header-search-bar,
+  #custom-cursor-canvas,
+  .scanlines,
+  header,
+  footer,
+  #tour-close-btn,
+  .tour-overlay,
+  svg,
+  button {
+    display: none !important;
+  }
+
+  /* Keep checklist checkbox checkmarks if checked, but styled cleanly for paper */
+  svg.print-check-icon {
+    display: inline-block !important;
+    color: #10b981 !important;
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  /* Glassmorphism boxes transformed to clean paper cards with solid borders */
+  .glass-panel, .tilt-card {
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    box-shadow: none !important;
+    color: #111827 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-radius: 8px !important;
+    margin-bottom: 1.5rem !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    transform: none !important;
+  }
+
+  /* Force white text headers to be crisp black text for paper */
+  h1, h2, h3, h4, h5, h6, p, span, li, a {
+    color: #111827 !important;
+    text-shadow: none !important;
+  }
+
+  /* Specific highlights for tags */
+  span.font-mono {
+    background-color: #f3f4f6 !important;
+    border: 1px solid #e5e7eb !important;
+    color: #374151 !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+  }
+
+  /* Custom Print Title Banner */
+  .print-header-only {
+    display: block !important;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #111827;
+    padding-bottom: 1rem;
+  }
+
+  .print-title {
+    font-size: 24pt;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  /* Grid layouts adjusted for single-column print consistency */
+  .grid {
+    display: block !important;
+  }
+
+  .grid > * {
+    width: 100% !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Avoid cutting cards across pages */
+  #idp-recommendations-list > div {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+
+/* Hide print-only header on screen */
+.print-header-only {
+  display: none;
+}
