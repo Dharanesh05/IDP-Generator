@@ -123,7 +123,7 @@ export default function App() {
             </div>
             <div>
               <span className="font-display font-bold text-white text-sm tracking-tight block">IDP RECOMMENDER</span>
-              <span className="text-[9px] font-mono text-amber-400 leading-none">HOME WORKSPACE</span>
+              <span className="text-[9px] font-mono text-amber-400 leading-none">AI CAREER PLANNING</span>
             </div>
           </div>
 
