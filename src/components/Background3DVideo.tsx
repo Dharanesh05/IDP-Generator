@@ -7,59 +7,51 @@ export default function Background3DVideo() {
     const video = videoRef.current;
     if (!video) return;
 
-    let animId: number;
-    let lastTime: number | null = null;
+    let animationFrameId: number;
     let isReversing = false;
+    let lastTime: number | null = null;
 
-    const handleEnded = () => {
-      if (isReversing) return;
-      isReversing = true;
-      video.pause();
-      lastTime = performance.now();
-      animId = requestAnimationFrame(stepReverse);
-    };
-
-    const stepReverse = (timestamp: number) => {
+    const stepReverse = (now: number) => {
       if (!isReversing || !video) return;
 
       if (lastTime !== null) {
-        const delta = (timestamp - lastTime) / 1000;
-        const newTime = video.currentTime - delta;
+        const delta = (now - lastTime) / 1000;
+        const nextTime = video.currentTime - delta;
 
-        if (newTime <= 0.05) {
+        if (nextTime <= 0) {
           video.currentTime = 0;
           isReversing = false;
-          lastTime = null;
           video.play().catch(() => {});
           return;
         } else {
-          video.currentTime = newTime;
+          video.currentTime = nextTime;
         }
       }
 
-      lastTime = timestamp;
-      animId = requestAnimationFrame(stepReverse);
+      lastTime = now;
+      animationFrameId = requestAnimationFrame(stepReverse);
     };
 
-    const handleTimeUpdate = () => {
-      if (!isReversing && video.duration && video.currentTime >= video.duration - 0.08) {
-        handleEnded();
-      }
+    const handleEnded = () => {
+      isReversing = true;
+      video.pause();
+      lastTime = performance.now();
+      animationFrameId = requestAnimationFrame(stepReverse);
     };
 
     video.addEventListener("ended", handleEnded);
-    video.addEventListener("timeupdate", handleTimeUpdate);
 
     return () => {
       video.removeEventListener("ended", handleEnded);
-      video.removeEventListener("timeupdate", handleTimeUpdate);
-      if (animId) cancelAnimationFrame(animId);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
     };
   }, []);
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#0a0e17]">
-      {/* Direct Background Video with smooth forward & reverse boomerang loop */}
+      {/* Seamless forward & reverse loop background video */}
       <video
         ref={videoRef}
         autoPlay
