@@ -290,14 +290,6 @@ function createClientFallbackIDP(studentProfile: StudentProfile): ComprehensiveI
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              id="btn-project-overview-header"
-              onClick={() => setShowOverview(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-mono text-amber-100 hover:text-white bg-[#0f0d18]/80 border border-amber-500/30 hover:border-amber-400 transition-colors cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.15)]"
-            >
-              <BookOpen size={13} className="text-amber-400" />
-              <span>Project Abstract</span>
-            </button>
 
             {/* User Profile Badge & Dropdown */}
             <div className="relative">
@@ -400,7 +392,7 @@ function createClientFallbackIDP(studentProfile: StudentProfile): ComprehensiveI
         </div>
       </footer>
 
-      {/* Project Abstract & Table of Contents Modal */}
+      {/* Table of Contents Modal */}
       <ProjectOverview 
         isOpen={showOverview} 
         onClose={() => setShowOverview(false)} 

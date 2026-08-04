@@ -148,7 +148,7 @@ export default function ProjectOverview({ isOpen, onClose, hasIdp, onSelectSecti
                 </div>
                 <div>
                   <h2 className="font-display font-bold text-white text-base tracking-tight uppercase">
-                    Project Overview & Table of Contents
+                    Project Table of Contents
                   </h2>
                   <p className="text-[10px] font-mono text-neon-blue uppercase tracking-wider leading-none mt-1">
                     Document Specification & Interactive Guide
@@ -166,30 +166,6 @@ export default function ProjectOverview({ isOpen, onClose, hasIdp, onSelectSecti
             {/* Scrollable Content Body */}
             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
               
-              {/* Project Abstract Section */}
-              <section className="space-y-3">
-                <h3 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles size={12} className="text-neon-blue animate-pulse" />
-                  Project Abstract
-                </h3>
-                <div className="glass-panel p-5 rounded-xl border border-neon-blue/10 bg-cyber-dark/30 relative overflow-hidden">
-                  <div className="absolute -bottom-12 -right-12 w-28 h-28 bg-neon-blue/5 rounded-full blur-xl pointer-events-none" />
-                  <p className="text-xs sm:text-sm text-gray-300 leading-relaxed font-sans">
-                    The <strong>Intelligent IDP Recommender</strong> is an advanced, interactive, AI-driven career acceleration suite. 
-                    By matching a student's core academic specialization, current skill profile, and career aspiration metrics, 
-                    the platform utilizes <strong>Google Gemini API</strong> capabilities to synthesize a structured, zero-fluff 
-                    Individual Development Plan (IDP).
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-300 leading-relaxed font-sans mt-3">
-                    Engineered to streamline study schedules, the application organizes growth targets into clean action tracks. 
-                    It distinguishes between budget-friendly certifications (free) and enterprise gold-standards (paid), 
-                    suggests hands-on GitHub projects, supplies interactive algorithms and aptitude drilling routines, 
-                    and drafts specific STAR resume improvements alongside tailored behavioral mock questions. 
-                    To sustain daily commitment, a gamified <strong>Daily Attendance Streak Engine</strong> lets students track attendance and claim Career XP multipliers.
-                  </p>
-                </div>
-              </section>
-
               {/* Table of Contents Section */}
               <section className="space-y-4">
                 <div className="flex items-center justify-between">
