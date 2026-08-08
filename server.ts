@@ -1,26 +1,42 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 
-// Lazy-initialized Gemini API client
+// Enable CORS
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  if (req.method === "OPTIONS") {
+    res.sendStatus(200);
+    return;
+  }
+  next();
+});
+
+// Dynamic Gemini API client instantiation
 let aiClient: GoogleGenAI | null = null;
+let currentApiKey: string | null = null;
 
 function getGeminiClient(): GoogleGenAI | null {
+  dotenv.config();
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
     console.warn("GEMINI_API_KEY is not configured or holds the placeholder value. Falling back to high-quality template-based generator.");
+    aiClient = null;
+    currentApiKey = null;
     return null;
   }
-  if (!aiClient) {
+  if (!aiClient || currentApiKey !== apiKey) {
+    currentApiKey = apiKey;
     aiClient = new GoogleGenAI({
       apiKey: apiKey,
       httpOptions: {
@@ -245,7 +261,7 @@ function generateFallbackIDP(major: string, skills: string, goals: string, level
 }
 
 // API Route for IDP Recommendation
-app.post("/api/generate-idp", async (req, res) => {
+app.post(["/api/generate-idp", "/generate-idp"], async (req, res) => {
   let reqMajor = "Computer Science";
   let reqSkills = "Software Engineering";
   let reqGoals = "Software Developer";
@@ -288,174 +304,180 @@ Your response MUST be fully populated, highly relevant to their target goals, an
     const systemInstruction = `You are an elite AI Career Advisory System. Your task is to output a comprehensive and highly specific Individual Development Plan (IDP) in valid JSON format.
 Ensure that each list of items has exactly 2 to 4 high-quality, practical entries. For certifications, make sure to classify whether it is paid (isPaid: true, priceInfo: e.g. "Paid Certificate") or free (isPaid: false, priceInfo: "Free"). Give exact course names, popular platforms, github projects, and real interview advice customized for this specific student.`;
 
-    try {
-      const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
-        contents: prompt,
-        config: {
-          systemInstruction: systemInstruction,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              summary: {
-                type: Type.STRING,
-                description: "A customized summary of their development plan and strategic steps.",
-              },
-              suggestedRoles: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: "Target job titles.",
-              },
-              certifications: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    id: { type: Type.STRING },
-                    title: { type: Type.STRING },
-                    providerOrPlatform: { type: Type.STRING },
-                    description: { type: Type.STRING },
-                    link: { type: Type.STRING },
-                    difficultyOrTime: { type: Type.STRING },
-                    skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    actionLabel: { type: Type.STRING },
-                    isPaid: { type: Type.BOOLEAN },
-                    priceInfo: { type: Type.STRING }
-                  },
-                  required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel", "isPaid", "priceInfo"]
+    const modelsToTry = ["gemini-flash-latest", "gemini-3.5-flash", "gemini-3.6-flash", "gemini-flash-lite-latest"];
+    let response: any = null;
+    let lastErr: any = null;
+
+    for (const m of modelsToTry) {
+      try {
+        response = await ai.models.generateContent({
+          model: m,
+          contents: prompt,
+          config: {
+            systemInstruction: systemInstruction,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                summary: {
+                  type: Type.STRING,
+                  description: "A customized summary of their development plan and strategic steps.",
+                },
+                suggestedRoles: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
+                  description: "Target job titles.",
+                },
+                certifications: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      id: { type: Type.STRING },
+                      title: { type: Type.STRING },
+                      providerOrPlatform: { type: Type.STRING },
+                      description: { type: Type.STRING },
+                      link: { type: Type.STRING },
+                      difficultyOrTime: { type: Type.STRING },
+                      skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
+                      actionLabel: { type: Type.STRING },
+                      isPaid: { type: Type.BOOLEAN },
+                      priceInfo: { type: Type.STRING }
+                    },
+                    required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel", "isPaid", "priceInfo"]
+                  }
+                },
+                projects: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      id: { type: Type.STRING },
+                      title: { type: Type.STRING },
+                      providerOrPlatform: { type: Type.STRING },
+                      description: { type: Type.STRING },
+                      link: { type: Type.STRING },
+                      difficultyOrTime: { type: Type.STRING },
+                      skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
+                      actionLabel: { type: Type.STRING }
+                    },
+                    required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
+                  }
+                },
+                codingPractice: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      id: { type: Type.STRING },
+                      title: { type: Type.STRING },
+                      providerOrPlatform: { type: Type.STRING },
+                      description: { type: Type.STRING },
+                      link: { type: Type.STRING },
+                      difficultyOrTime: { type: Type.STRING },
+                      skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
+                      actionLabel: { type: Type.STRING }
+                    },
+                    required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
+                  }
+                },
+                aptitudePractice: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      id: { type: Type.STRING },
+                      title: { type: Type.STRING },
+                      providerOrPlatform: { type: Type.STRING },
+                      description: { type: Type.STRING },
+                      link: { type: Type.STRING },
+                      difficultyOrTime: { type: Type.STRING },
+                      skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
+                      actionLabel: { type: Type.STRING }
+                    },
+                    required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
+                  }
+                },
+                softSkills: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      id: { type: Type.STRING },
+                      title: { type: Type.STRING },
+                      providerOrPlatform: { type: Type.STRING },
+                      description: { type: Type.STRING },
+                      link: { type: Type.STRING },
+                      difficultyOrTime: { type: Type.STRING },
+                      skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
+                      actionLabel: { type: Type.STRING }
+                    },
+                    required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
+                  }
+                },
+                resumeImprovements: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      id: { type: Type.STRING },
+                      title: { type: Type.STRING },
+                      providerOrPlatform: { type: Type.STRING },
+                      description: { type: Type.STRING },
+                      link: { type: Type.STRING },
+                      difficultyOrTime: { type: Type.STRING },
+                      skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
+                      actionLabel: { type: Type.STRING }
+                    },
+                    required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
+                  }
+                },
+                interviewPrep: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      id: { type: Type.STRING },
+                      title: { type: Type.STRING },
+                      providerOrPlatform: { type: Type.STRING },
+                      description: { type: Type.STRING },
+                      link: { type: Type.STRING },
+                      difficultyOrTime: { type: Type.STRING },
+                      skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
+                      actionLabel: { type: Type.STRING }
+                    },
+                    required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
+                  }
                 }
               },
-              projects: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    id: { type: Type.STRING },
-                    title: { type: Type.STRING },
-                    providerOrPlatform: { type: Type.STRING },
-                    description: { type: Type.STRING },
-                    link: { type: Type.STRING },
-                    difficultyOrTime: { type: Type.STRING },
-                    skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    actionLabel: { type: Type.STRING }
-                  },
-                  required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
-                }
-              },
-              codingPractice: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    id: { type: Type.STRING },
-                    title: { type: Type.STRING },
-                    providerOrPlatform: { type: Type.STRING },
-                    description: { type: Type.STRING },
-                    link: { type: Type.STRING },
-                    difficultyOrTime: { type: Type.STRING },
-                    skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    actionLabel: { type: Type.STRING }
-                  },
-                  required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
-                }
-              },
-              aptitudePractice: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    id: { type: Type.STRING },
-                    title: { type: Type.STRING },
-                    providerOrPlatform: { type: Type.STRING },
-                    description: { type: Type.STRING },
-                    link: { type: Type.STRING },
-                    difficultyOrTime: { type: Type.STRING },
-                    skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    actionLabel: { type: Type.STRING }
-                  },
-                  required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
-                }
-              },
-              softSkills: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    id: { type: Type.STRING },
-                    title: { type: Type.STRING },
-                    providerOrPlatform: { type: Type.STRING },
-                    description: { type: Type.STRING },
-                    link: { type: Type.STRING },
-                    difficultyOrTime: { type: Type.STRING },
-                    skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    actionLabel: { type: Type.STRING }
-                  },
-                  required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
-                }
-              },
-              resumeImprovements: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    id: { type: Type.STRING },
-                    title: { type: Type.STRING },
-                    providerOrPlatform: { type: Type.STRING },
-                    description: { type: Type.STRING },
-                    link: { type: Type.STRING },
-                    difficultyOrTime: { type: Type.STRING },
-                    skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    actionLabel: { type: Type.STRING }
-                  },
-                  required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
-                }
-              },
-              interviewPrep: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    id: { type: Type.STRING },
-                    title: { type: Type.STRING },
-                    providerOrPlatform: { type: Type.STRING },
-                    description: { type: Type.STRING },
-                    link: { type: Type.STRING },
-                    difficultyOrTime: { type: Type.STRING },
-                    skillsAcquired: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    actionLabel: { type: Type.STRING }
-                  },
-                  required: ["id", "title", "providerOrPlatform", "description", "link", "difficultyOrTime", "skillsAcquired", "actionLabel"]
-                }
-              }
+              required: [
+                "summary",
+                "suggestedRoles",
+                "certifications",
+                "projects",
+                "codingPractice",
+                "aptitudePractice",
+                "softSkills",
+                "resumeImprovements",
+                "interviewPrep"
+              ]
             },
-            required: [
-              "summary",
-              "suggestedRoles",
-              "certifications",
-              "projects",
-              "codingPractice",
-              "aptitudePractice",
-              "softSkills",
-              "resumeImprovements",
-              "interviewPrep"
-            ]
           },
-        },
-      });
-
-      const text = response.text;
-      if (!text) {
-        throw new Error("Empty text returned from Gemini API");
+        });
+        if (response && response.text) break;
+      } catch (e: any) {
+        lastErr = e;
       }
+    }
 
-      const resultJson = JSON.parse(text.trim());
+    if (response && response.text) {
+      const resultJson = JSON.parse(response.text.trim());
       res.json({
         ...resultJson,
         isMock: false
       });
-    } catch (apiErr: any) {
-      console.warn("Gemini API call failed, using intelligent fallback generator:", apiErr?.message || apiErr);
+    } else {
+      console.warn("Gemini API call failed across models, using intelligent fallback generator:", lastErr?.message || lastErr);
       const fallback = generateFallbackIDP(reqMajor, reqSkills, reqGoals, reqLevel, reqCommitment);
       res.json(fallback);
     }
@@ -468,29 +490,72 @@ Ensure that each list of items has exactly 2 to 4 high-quality, practical entrie
 
 // Helper function for generating intelligent fallback chat responses
 function getFallbackChatAnswer(message: string, studentProfile: any, idp: any): string {
-  const majorStr = studentProfile?.major || "Computer Science / Tech";
-  const goalsStr = studentProfile?.goals || "Software Career";
-  const msgLower = message.toLowerCase();
+  const majorStr = studentProfile?.major || "Computer Science & Engineering";
+  const goalsStr = studentProfile?.goals || "Technology Specialist";
+  const msgTrimmed = message.trim();
+  const msgLower = msgTrimmed.toLowerCase();
 
-  let answer = `Regarding your question about **"${message.trim()}"**:\n\nBased on your profile in **${majorStr}** targeting **${goalsStr}**, `;
+  // Hardware, Embedded & Semiconductor domain questions
+  if (/\b(hardware|chip|semiconductor|vlsi|embedded|robotics|fpga|microcontroller|risc|circuit|npu|gpu|tpu|pcb)\b/i.test(msgLower)) {
+    return `### 🚀 Most Popular & Future-Proof Hardware Engineering Fields
 
-  if (msgLower.includes("certif")) {
-    answer += `we recommend exploring the free foundational track (e.g. Meta, AWS, or freeCodeCamp modules) before enrolling in paid credentials. Check out the **Certifications** section in your dashboard for direct links!`;
-  } else if (msgLower.includes("project") || msgLower.includes("github") || msgLower.includes("build")) {
-    answer += `focus on building 2-3 end-to-end portfolio projects showcasing your skills in ${studentProfile?.skills || "your primary tech stack"}. Make sure your GitHub repositories include clean documentation and live deployment links.`;
-  } else if (msgLower.includes("interview") || msgLower.includes("resume") || msgLower.includes("prep")) {
-    answer += `use the STAR method (Situation, Task, Action, Result) for behavioral questions and highlight quantified results (e.g., "improved response time by 40%") on your resume.`;
-  } else if (msgLower.includes("hi") || msgLower.includes("hello") || msgLower.includes("hey")) {
-    answer += `hello! How can I help you advance toward your **${goalsStr}** career goals today? Feel free to ask about certifications, projects, coding practice, or interview prep!`;
-  } else {
-    answer += `make sure to maintain your weekly commitment of **${studentProfile?.timeCommitment || "10 hours/week"}** and track your daily learning consistency with the Login Streak tracker!`;
+Based on current industry demand and emerging technologies, here are the top hardware domains for future growth:
+
+1. **AI Acceleration & Custom Silicon Design (NPU/GPU/TPU)**
+   - Designing specialized tensor-processing microarchitectures for AI inference and model training (NVIDIA, Apple Neural Engine, Google TPU, Tenstorrent).
+   - High demand for **Verilog / SystemVerilog**, **RISC-V**, and **ASIC design**.
+
+2. **Semiconductor & Advanced VLSI Engineering**
+   - High-density chiplet architecture, 3D IC stacking, and sub-2nm node development.
+   - Essential skills: VLSI layout, physical design synthesis, static timing analysis (STA).
+
+3. **Embedded Systems, TinyML & Edge Devices**
+   - Running lightweight neural networks on microcontrollers (STM32, ESP32, ARM Cortex-M).
+   - Critical for smart devices, automotive ECUs, and medical IoT devices.
+
+4. **Robotics & Autonomous Systems Hardware**
+   - Motor controllers, sensor fusion (LiDAR, Radar, Cameras), and real-time processing units for drones and autonomous vehicles.
+
+5. **Quantum Hardware & Photonics Engineering**
+   - Superconducting qubits, optical interconnects, and silicon photonics for next-gen datacenter throughput.
+
+*Tip for **${majorStr}** students:* Combining hardware knowledge (C/C++, Verilog, SystemC) with software proficiency (Python, CUDA, PyTorch) makes you an exceptionally high-value candidate in tech!`;
   }
 
-  return answer;
+  // Greetings check (word boundary prevents matching "which", "machine", "white", etc.)
+  if (/^\s*(hi|hello|hey|greetings|howdy|good morning|good afternoon|good evening)\b/i.test(msgLower)) {
+    return `Hello! 👋 I'm your **Gemini AI Career & IDP Assistant**. 
+
+I have loaded your IDP profile for **${majorStr}** targeting **${goalsStr}**. 
+
+How can I help you today? You can ask me about:
+- **Hardware & Software career trends**
+- **Recommended free vs paid certifications**
+- **GitHub portfolio project ideas**
+- **Interview preparation & resume tips**`;
+  }
+
+  // Certifications
+  if (msgLower.includes("certif") || msgLower.includes("course")) {
+    return `Regarding certifications for **${goalsStr}**:\n\nWe recommend starting with free, high-impact foundational certificates (such as freeCodeCamp, Meta/Coursera free audit, or AWS Skill Builder) before enrolling in paid credentials. Check out the curated **Certifications** section in your plan dashboard for direct links!`;
+  }
+
+  // Projects & GitHub
+  if (msgLower.includes("project") || msgLower.includes("github") || msgLower.includes("build") || msgLower.includes("portfolio")) {
+    return `For building a standout portfolio in **${goalsStr}**:\n\nFocus on building 2-3 end-to-end projects demonstrating your skills in ${studentProfile?.skills || "your primary stack"}. Ensure each GitHub repository includes detailed setup documentation, clean architecture, and a live hosted demo link!`;
+  }
+
+  // Interview & Resume
+  if (msgLower.includes("interview") || msgLower.includes("resume") || msgLower.includes("prep") || msgLower.includes("cv")) {
+    return `For interview and resume preparation:\n\nUse the **STAR framework** (Situation, Task, Action, Result) for behavioral questions and highlight quantified impact (e.g., *"Optimized API latency by 35% using Redis caching"*) on your resume. Check your dashboard's **Interview Prep** panel for mock interview platforms!`;
+  }
+
+  // Default intelligent response referencing user's prompt
+  return `Regarding your question about **"${msgTrimmed}"**:\n\nBased on your **${majorStr}** profile targeting **${goalsStr}**, maintaining consistent progress is key. Ensure you follow your weekly study commitment of **${studentProfile?.timeCommitment || "10 hours/week"}** and explore the customized project and certification tracks on your IDP dashboard!`;
 }
 
 // API Route for Floating IDP AI Assistant Chat
-app.post("/api/chat-idp", async (req, res) => {
+app.post(["/api/chat-idp", "/chat-idp"], async (req, res) => {
   try {
     const { message, history, studentProfile, idp } = req.body;
 
@@ -550,16 +615,26 @@ GUIDELINES:
       { role: "user", parts: [{ text: `${systemInstruction}\n\nUSER QUESTION: ${message}` }] }
     ];
 
-    try {
-      const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
-        contents: contents,
-      });
+    const modelsToTry = ["gemini-flash-latest", "gemini-3.5-flash", "gemini-3.6-flash", "gemini-flash-lite-latest"];
+    let response: any = null;
+    let lastErr: any = null;
 
-      const replyText = response.text || getFallbackChatAnswer(message, studentProfile, idp);
-      res.json({ reply: replyText });
-    } catch (apiErr: any) {
-      console.warn("Gemini Chat API call failed, using fallback answer:", apiErr?.message || apiErr);
+    for (const m of modelsToTry) {
+      try {
+        response = await ai.models.generateContent({
+          model: m,
+          contents: contents,
+        });
+        if (response && response.text) break;
+      } catch (e: any) {
+        lastErr = e;
+      }
+    }
+
+    if (response && response.text) {
+      res.json({ reply: response.text });
+    } else {
+      console.warn("Gemini Chat API call failed across models, using fallback answer:", lastErr?.message || lastErr);
       const fallbackAnswer = getFallbackChatAnswer(message, studentProfile, idp);
       res.json({ reply: fallbackAnswer });
     }
@@ -584,7 +659,7 @@ interface StoredUser {
 const usersDb: StoredUser[] = [];
 
 // API Auth Endpoints
-app.post("/api/signup", (req, res) => {
+app.post(["/api/signup", "/signup"], (req, res) => {
   try {
     let body = req.body;
     if (typeof body === "string") {
@@ -628,7 +703,7 @@ app.post("/api/signup", (req, res) => {
   }
 });
 
-app.post("/api/login", (req, res) => {
+app.post(["/api/login", "/login"], (req, res) => {
   try {
     let body = req.body;
     if (typeof body === "string") {
@@ -661,7 +736,7 @@ app.post("/api/login", (req, res) => {
   }
 });
 
-app.post("/api/logout", (_req, res) => {
+app.post(["/api/logout", "/logout"], (_req, res) => {
   res.json({ success: true, message: "Logged out successfully." });
 });
 
@@ -669,6 +744,7 @@ app.post("/api/logout", (_req, res) => {
 // Configure Vite middleware and static serving
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",

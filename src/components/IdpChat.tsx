@@ -138,21 +138,55 @@ export default function IdpChat({
       console.warn("API fetch error, generating intelligent client-side response:", err);
       
       const majorStr = studentProfile?.major || "Computer Science & Engineering";
-      const goalsStr = studentProfile?.goals || "Software Career";
-      const queryLower = query.toLowerCase();
+      const goalsStr = studentProfile?.goals || "Technology Specialist";
+      const queryTrimmed = query.trim();
+      const queryLower = queryTrimmed.toLowerCase();
 
-      let replyText = `Regarding your question about **"${query.trim()}"**:\n\nBased on your IDP roadmap for **${majorStr}** targeting **${goalsStr}**, `;
+      let replyText = "";
 
-      if (queryLower.includes("certif")) {
-        replyText += `we recommend completing free foundational certificates (such as Meta, AWS, or freeCodeCamp tracks) first before committing to paid professional certifications. Check out the **Certifications** section in your plan dashboard for direct links!`;
-      } else if (queryLower.includes("project") || queryLower.includes("github") || queryLower.includes("build")) {
-        replyText += `focus on building 2-3 end-to-end GitHub portfolio projects that demonstrate practical mastery of ${studentProfile?.skills || "your primary stack"}. Include clear setup instructions and live demo links on your GitHub repository README.`;
-      } else if (queryLower.includes("interview") || queryLower.includes("resume") || queryLower.includes("prep")) {
-        replyText += `prepare behavioral interview questions using the STAR framework (Situation, Task, Action, Result) and highlight measurable outcome metrics on your resume (e.g. "improved performance by 35%").`;
-      } else if (queryLower.includes("hi") || queryLower.includes("hello") || queryLower.includes("hey")) {
-        replyText += `hello! How can I assist you with your **${goalsStr}** career plan today? Ask me about recommended certifications, GitHub portfolio projects, or interview strategies!`;
+      // Hardware, Embedded & Semiconductor domain questions
+      if (/\b(hardware|chip|semiconductor|vlsi|embedded|robotics|fpga|microcontroller|risc|circuit|npu|gpu|tpu|pcb)\b/i.test(queryLower)) {
+        replyText = `### 🚀 Most Popular & Future-Proof Hardware Engineering Fields
+
+Based on current industry demand and emerging technologies, here are the top hardware domains for future growth:
+
+1. **AI Acceleration & Custom Silicon Design (NPU/GPU/TPU)**
+   - Designing specialized tensor-processing microarchitectures for AI inference and model training (NVIDIA, Apple Neural Engine, Google TPU, Tenstorrent).
+   - High demand for **Verilog / SystemVerilog**, **RISC-V**, and **ASIC design**.
+
+2. **Semiconductor & Advanced VLSI Engineering**
+   - High-density chiplet architecture, 3D IC stacking, and sub-2nm node development.
+   - Essential skills: VLSI layout, physical design synthesis, static timing analysis (STA).
+
+3. **Embedded Systems, TinyML & Edge Devices**
+   - Running lightweight neural networks on microcontrollers (STM32, ESP32, ARM Cortex-M).
+   - Critical for smart devices, automotive ECUs, and medical IoT devices.
+
+4. **Robotics & Autonomous Systems Hardware**
+   - Motor controllers, sensor fusion (LiDAR, Radar, Cameras), and real-time processing units for drones and autonomous vehicles.
+
+5. **Quantum Hardware & Photonics Engineering**
+   - Superconducting qubits, optical interconnects, and silicon photonics for next-gen datacenter throughput.
+
+*Tip for **${majorStr}** students:* Combining hardware knowledge (C/C++, Verilog, SystemC) with software proficiency (Python, CUDA, PyTorch) makes you an exceptionally high-value candidate in tech!`;
+      } else if (/^\s*(hi|hello|hey|greetings|howdy|good morning|good afternoon|good evening)\b/i.test(queryLower)) {
+        replyText = `Hello! 👋 I'm your **Gemini AI Career & IDP Assistant**. 
+
+I have loaded your IDP profile for **${majorStr}** targeting **${goalsStr}**. 
+
+How can I help you today? You can ask me about:
+- **Hardware & Software career trends**
+- **Recommended free vs paid certifications**
+- **GitHub portfolio project ideas**
+- **Interview preparation & resume tips**`;
+      } else if (queryLower.includes("certif") || queryLower.includes("course")) {
+        replyText = `Regarding certifications for **${goalsStr}**:\n\nWe recommend starting with free, high-impact foundational certificates (such as freeCodeCamp, Meta/Coursera free audit, or AWS Skill Builder) before enrolling in paid credentials. Check out the curated **Certifications** section in your plan dashboard for direct links!`;
+      } else if (queryLower.includes("project") || queryLower.includes("github") || queryLower.includes("build") || queryLower.includes("portfolio")) {
+        replyText = `For building a standout portfolio in **${goalsStr}**:\n\nFocus on building 2-3 end-to-end projects demonstrating your skills in ${studentProfile?.skills || "your primary stack"}. Ensure each GitHub repository includes detailed setup documentation, clean architecture, and a live hosted demo link!`;
+      } else if (queryLower.includes("interview") || queryLower.includes("resume") || queryLower.includes("prep") || queryLower.includes("cv")) {
+        replyText = `For interview and resume preparation:\n\nUse the **STAR framework** (Situation, Task, Action, Result) for behavioral questions and highlight quantified impact (e.g., *"Optimized API latency by 35% using Redis caching"*) on your resume. Check your dashboard's **Interview Prep** panel for mock interview platforms!`;
       } else {
-        replyText += `make sure to follow your weekly study commitment of **${studentProfile?.timeCommitment || "10 hours/week"}** and log your daily progress in the Login Streak tracker to maintain continuous learning momentum!`;
+        replyText = `Regarding your question about **"${queryTrimmed}"**:\n\nBased on your **${majorStr}** profile targeting **${goalsStr}**, maintaining consistent progress is key. Ensure you follow your weekly study commitment of **${studentProfile?.timeCommitment || "10 hours/week"}** and explore the customized project and certification tracks on your IDP dashboard!`;
       }
 
       const aiMsg: ChatMessage = {
