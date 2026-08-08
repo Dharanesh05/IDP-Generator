@@ -656,10 +656,19 @@ interface StoredUser {
   createdAt: string;
 }
 
-const usersDb: StoredUser[] = [];
+const usersDb: StoredUser[] = [
+  {
+    id: "usr_demo_123",
+    name: "Alex Dev",
+    email: "alex@example.com",
+    passwordHash: "password123",
+    institution: "Computer Science University",
+    createdAt: new Date().toISOString()
+  }
+];
 
 // API Auth Endpoints
-app.post(["/api/signup", "/signup"], (req, res) => {
+app.post(["/api/signup", "/signup", "/api/register", "/register"], (req, res) => {
   try {
     let body = req.body;
     if (typeof body === "string") {
