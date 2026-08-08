@@ -235,6 +235,9 @@ function createClientFallbackIDP(studentProfile: StudentProfile): ComprehensiveI
     setProfile(studentProfile);
     setErrorMsg(null);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second safety timeout
+
     try {
       const response = await fetch("/api/generate-idp", {
         method: "POST",
@@ -242,7 +245,9 @@ function createClientFallbackIDP(studentProfile: StudentProfile): ComprehensiveI
           "Content-Type": "application/json",
         },
         body: JSON.stringify(studentProfile),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`Server responded with ${response.status}`);
@@ -251,7 +256,8 @@ function createClientFallbackIDP(studentProfile: StudentProfile): ComprehensiveI
       const data = await response.json();
       setIdp(data);
     } catch (err: any) {
-      console.warn("Generate IDP API error, generating intelligent client-side IDP:", err);
+      clearTimeout(timeoutId);
+      console.warn("Generate IDP API timeout or error, rendering intelligent IDP roadmap:", err);
       const fallbackData = createClientFallbackIDP(studentProfile);
       setIdp(fallbackData);
     } finally {

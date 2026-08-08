@@ -22,7 +22,7 @@ export default function LoadingScreen() {
         setLogs((prev) => [...prev, LOADING_STEPS[currentStep]]);
         setCurrentStep((prev) => prev + 1);
       }
-    }, 1300);
+    }, 600);
 
     return () => clearInterval(logInterval);
   }, [currentStep]);

@@ -308,9 +308,13 @@ Ensure that each list of items has exactly 2 to 4 high-quality, practical entrie
     let response: any = null;
     let lastErr: any = null;
 
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Gemini API call timed out after 7 seconds")), 7000)
+    );
+
     for (const m of modelsToTry) {
       try {
-        response = await ai.models.generateContent({
+        const apiCall = ai.models.generateContent({
           model: m,
           contents: prompt,
           config: {
@@ -464,6 +468,8 @@ Ensure that each list of items has exactly 2 to 4 high-quality, practical entrie
             },
           },
         });
+
+        response = await Promise.race([apiCall, timeoutPromise]);
         if (response && response.text) break;
       } catch (e: any) {
         lastErr = e;
